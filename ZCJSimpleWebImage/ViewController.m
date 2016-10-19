@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import "ZCJWebImageDownloader.h"
 
 @interface ViewController ()
 
@@ -17,6 +18,20 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    NSString *imageURL = @"http://s3.amazonaws.com/fast-image-cache/demo-images/FICDDemoImage004.jpg";
+    imageURL = @"http://i.stack.imgur.com/LqXFE.png";
+
+    [[ZCJWebImageDownloader sharedDownloader] downloadImageWith:imageURL completeBlock:^(UIImage *image, NSError *error, BOOL isFinished) {
+        
+        if (image && !error && isFinished) {
+            //[expectation fulfill];
+            NSLog(@"ok");
+        } else {
+            //XCTFail(@"Something went wrong");
+            NSLog(@"wrong");
+
+        }
+    }];
 }
 
 
