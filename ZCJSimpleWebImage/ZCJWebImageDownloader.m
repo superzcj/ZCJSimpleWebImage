@@ -19,7 +19,6 @@
 
 @property (nonatomic, strong) NSMutableDictionary *URLoperations;
 
-@property (nonatomic, strong) NSURLSession *session;
 
 @end
 
@@ -32,19 +31,13 @@
     return downloader;
 }
 
--(void)dealloc {
-    [self.session invalidateAndCancel];
-    self.session = nil;
-    
-}
 
 -(instancetype)init {
     self = [super init];
     if (self) {
         _barrierQueue = dispatch_queue_create("com.zcj.ZCJWebImageDownloaderBarrierQueue", DISPATCH_QUEUE_CONCURRENT);
-        _session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
         _downloadQueue = [[NSOperationQueue alloc] init];
-        _downloadQueue.maxConcurrentOperationCount = 8;
+        //_downloadQueue.maxConcurrentOperationCount = 8;
         _downloadQueue.name = @"com.zcj.ZCJWebImageDownloader";
         
         _URLoperations = [NSMutableDictionary new];
@@ -65,7 +58,7 @@
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:urlStr] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15];
         request.HTTPShouldUsePipelining = YES;
 
-        ZCJWebImageDownloadOperation *operation = [[ZCJWebImageDownloadOperation alloc] initWithRequest:request session:self.session];
+        ZCJWebImageDownloadOperation *operation = [[ZCJWebImageDownloadOperation alloc] initWithRequest:request];
         operation.queuePriority = NSURLSessionTaskPriorityHigh;
         
         [self.downloadQueue addOperation:operation];
@@ -97,6 +90,16 @@
                 }
             };
             [operation addCompletedBlock:completeBlock];
+        }
+    });
+}
+
+- (void)cancel:(NSString *)url {
+    dispatch_barrier_sync(_barrierQueue, ^{
+        ZCJWebImageDownloadOperation *op = self.URLoperations[url];
+        BOOL canceled = [op cancel:url];
+        if (canceled) {
+            [self.URLoperations removeObjectForKey:url];
         }
     });
 }

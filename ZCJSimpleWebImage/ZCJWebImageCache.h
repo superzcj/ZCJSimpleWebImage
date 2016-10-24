@@ -7,7 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+
 
 @interface ZCJWebImageCache : NSObject
+
++(instancetype)sharedCache;
+
+- (void)storeImage:(UIImage *)image forKey:(NSString *)key;
+-(UIImage *)imageFromCacheForKey:(NSString *)key;
 
 @end

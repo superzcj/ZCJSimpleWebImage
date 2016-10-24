@@ -10,6 +10,15 @@
 
 static NSString *const kCompletedBlock = @"kCompletedBlock";
 
+#ifndef dispatch_main_async_safe
+#define dispatch_main_async_safe(block)\
+if (strcmp(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL), dispatch_queue_get_label(dispatch_get_main_queue())) == 0) {\
+block();\
+} else {\
+dispatch_async(dispatch_get_main_queue(), block);\
+}
+#endif
+
 @interface ZCJWebImageDownloadOperation()<NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
 @property (nonatomic, strong)NSMutableArray *callbackBlocks;
@@ -30,13 +39,12 @@ static NSString *const kCompletedBlock = @"kCompletedBlock";
 @implementation ZCJWebImageDownloadOperation
 
 
--(instancetype)initWithRequest:(NSURLRequest *)request session:(NSURLSession *)session {
+-(instancetype)initWithRequest:(NSURLRequest *)request{
     self = [super init];
     if (self) {
         _request = [request copy];
         _callbackBlocks = [NSMutableArray new];
         _isExecuting = NO;
-        //_unownedSession = session;
         _barrierQueue = dispatch_queue_create("com.zcj.ZCJWebImageDownloaderBarrierQueue", DISPATCH_QUEUE_CONCURRENT);
     }
     return self;
@@ -110,6 +118,21 @@ static NSString *const kCompletedBlock = @"kCompletedBlock";
     }
 }
 
+
+- (BOOL)cancel:(nullable id)token {
+    __block BOOL shouldCancel = NO;
+    dispatch_barrier_sync(self.barrierQueue, ^{
+        [self.callbackBlocks removeObjectIdenticalTo:token];
+        if (self.callbackBlocks.count == 0) {
+            shouldCancel = YES;
+        }
+    });
+    if (shouldCancel) {
+        [self cancel];
+    }
+    return shouldCancel;
+}
+
 - (void)done {
     _isExecuting = NO;
     _isFinished = YES;
@@ -154,15 +177,6 @@ didReceiveResponse:(NSURLResponse *)response
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
-    @synchronized(self) {
-        self.dataTask = nil;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            /*[[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadStopNotification object:self];
-            if (!error) {
-                [[NSNotificationCenter defaultCenter] postNotificationName:SDWebImageDownloadFinishNotification object:self];
-            }*/
-        });
-    }
     
     if (error) {
         NSLog(@"Task data error:%@", [error description]);
@@ -191,11 +205,11 @@ didReceiveResponse:(NSURLResponse *)response
                                 error:(nullable NSError *)error
                              finished:(BOOL)finished {
     NSArray<id> *completionBlocks = [self callbackForKey:kCompletedBlock];
-    dispatch_async(dispatch_get_main_queue(), ^{
+    //dispatch_main_async_safe(^{
         for (ZCJWebImageDownCompleteBlock completedBlock in completionBlocks) {
             completedBlock(image, error, finished);
         }
-    });
+    //});
 }
 
 @end

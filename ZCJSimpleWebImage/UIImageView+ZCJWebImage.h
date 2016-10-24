@@ -10,4 +10,5 @@
 
 @interface UIImageView (ZCJWebImage)
 
+- (void)zcj_setImageUrlWith:(NSString *)urlStr placeholderImage:(UIImage *)placeholder;
 @end

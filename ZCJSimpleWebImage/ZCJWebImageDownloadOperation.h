@@ -15,8 +15,9 @@
 
 @property (strong, nonatomic) NSURLSessionTask *dataTask;
 
--(instancetype)initWithRequest:(NSURLRequest *)request session:(NSURLSession *)session;
+-(instancetype)initWithRequest:(NSURLRequest *)request;
 
 - (void)addCompletedBlock:(ZCJWebImageDownCompleteBlock)completeBlock;
+- (BOOL)cancel:(nullable id)token;
 
 @end
