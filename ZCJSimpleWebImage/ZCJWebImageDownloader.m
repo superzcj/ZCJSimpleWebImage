@@ -53,6 +53,7 @@
         return;
     }
     
+    //创建图片下载操作类，配置后放入downloadQueue队列中，并设置操作的优先级
     ZCJWebImageDownloadOperation*(^createDownloaderOperation)() = ^(){
         
         NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:urlStr] cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:15];
@@ -63,6 +64,7 @@
         
         [self.downloadQueue addOperation:operation];
         
+        //将新操作作为原队列最后一个操作的依赖
         [self.lastOperation addDependency:operation];
         self.lastOperation = operation;
         

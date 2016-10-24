@@ -31,33 +31,10 @@ dispatch_async(dispatch_get_main_queue(), block);\
         self.image = placeholder;
     }
     __weak __typeof(self)wself = self;
-/*
-    [[ZCJWebImageDownloader sharedDownloader] downloadImageWith:urlStr completeBlock:^(UIImage *image, NSError *error, BOOL isFinished) {
-        
-        if (image && !error && isFinished) {
-            dispatch_main_async_safe(^{
-                if (image && !error && isFinished) {
-                    
-                    UIImageView *imageView = (UIImageView *)wself;
-                    imageView.image = image;
-                    imageView.backgroundColor = [UIColor redColor];
-                    [wself setNeedsLayout];
-                } else {
-                    
-                }
-
-            });
-        } else {
-            NSLog(@"wrong");
-            
-        }
-    }];
-    */
     
     [[ZCJWebImageManager sharedManager] loadImageWithUrl:urlStr completeBlock:^(UIImage *image, NSError *error, BOOL isFinished) {
         __strong __typeof (wself) sself = wself;
 
-       //dispatch_main_async_safe(^{
            dispatch_sync(dispatch_get_main_queue(), ^{
                
            if (image && !error && isFinished) {
@@ -66,8 +43,6 @@ dispatch_async(dispatch_get_main_queue(), block);\
                imageView.image = image;
                imageView.backgroundColor = [UIColor redColor];
                [sself setNeedsLayout];
-               //[self setNeedsDisplay];
-               //[sself layoutIfNeeded];
            } else {
 
            }
